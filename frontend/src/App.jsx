@@ -1,37 +1,35 @@
-import { Container, Stack, Text } from "@chakra-ui/react";
-import Navbar from "./components/Navbar";
-import UserGrid from "./components/UserGrid";
-import { useState } from "react";
+import { Container, Stack, useColorModeValue } from '@chakra-ui/react';
+import Navbar from "./components/Navbar"
+import UserGrid from './components/UserGrid';
+import { useState } from 'react';
 
-// updated this after recording. Make sure you do the same so that it can work in production
-export const BASE_URL = import.meta.env.MODE === "development" ? "http://127.0.0.1:5000/api" : "/api";
+import { BASE_URL } from "./constants";
 
 function App() {
-	const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState([]);
 
-	return (
-		<Stack minH={"100vh"}>
-			<Navbar setUsers={setUsers} />
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/usuarios`);
+      if (response.ok) {
+        const data = await response.json();
+        setUsers(data);
+      } else {
+        console.error("Erro ao buscar os usuários");
+      }
+    } catch (error) {
+      console.error("Erro ao conectar à API:", error);
+    }
+  };
 
-			<Container maxW={"1200px"} my={4}>
-				<Text
-					fontSize={{ base: "3xl", md: "50" }}
-					fontWeight={"bold"}
-					letterSpacing={"2px"}
-					textTransform={"uppercase"}
-					textAlign={"center"}
-					mb={8}
-				>
-					<Text as={"span"} bgGradient={"linear(to-r, cyan.400, blue.500)"} bgClip={"text"}>
-						My Besties
-					</Text>
-					🚀
-				</Text>
-
-				<UserGrid users={users} setUsers={setUsers} />
-			</Container>
-		</Stack>
-	);
+  return (
+    <Stack minH={"100vh"} bg={useColorModeValue("pink.200", "pink.400")}>
+      <Navbar setUsers={setUsers} fetchUsers={fetchUsers} /> {/* Passando fetchUsers como prop */}
+      <Container maxW={"1200px"} my={4}>
+        <UserGrid users={users} setUsers={setUsers} />
+      </Container>
+    </Stack>
+  );
 }
 
 export default App;

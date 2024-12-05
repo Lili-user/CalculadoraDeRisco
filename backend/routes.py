@@ -1,83 +1,102 @@
-from app import app, db
+from app import app
 from flask import request, jsonify
-from models import Friend
+from models import Userdata
+from app import db 
 
-# Get all friends
-@app.route("/api/friends",methods=["GET"])
-def get_friends():
-  friends = Friend.query.all() 
-  result = [friend.to_json() for friend in friends]
-  return jsonify(result)
+# Get all
+@app.route("/api/usuarios", methods=["GET"])
+def get_usuarios():
+    usuarios = Userdata.query.all()
+    result = [usuario.to_json() for usuario in usuarios]  
+    return jsonify(result)
 
-# Create a friend
-@app.route("/api/friends",methods=["POST"])
-def create_friend():
-  try:
+# Create 
+@app.route("/api/usuarios", methods=["POST"])
+def create_usuarios():
+    try:
+        data = request.json
+        
+        required_fields = ["nome", "idade", "expressao"]
+        for field in required_fields:
+            if field not in data or not data.get(field):
+                return jsonify({"error": f'Está faltando informação: {field}'}), 400
+        
+        nome = data.get("nome")
+        idade = data.get("idade")
+        expressao = data.get("expressao")
+    
+        new_usuario = Userdata(nome=nome, idade=idade, expressao=expressao)
+        db.session.add(new_usuario)
+        db.session.commit()
+        return jsonify(new_usuario.to_json()), 201
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+     
+@app.route("/api/usuarios/<int:id>", methods=["DELETE"])
+def delete_usuario(id):
+    try:
+        usuario = Userdata.query.get(id)  
+        if usuario is None:
+            return jsonify({"error": "Usuário não encontrado."}), 404
+        
+        db.session.delete(usuario)  
+        db.session.commit()
+        return jsonify({"msg": "usuario deletado com sucesso"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/usuarios/<int:id>", methods=["PATCH"])
+def update_usuario(id):
+    usuario = Userdata.query.get(id)
+    if not usuario:
+        return jsonify({"message": "Usuário não encontrado!"}), 404
     data = request.json
+    usuario.nome = data.get("nome", usuario.nome)
+    usuario.expressao = data.get("expressao", usuario.expressao)
+    usuario.idade = data.get("idade", usuario.idade)
+    
+    db.session.commit()
+    
+    return jsonify(usuario.to_json()), 200
 
-    # Validations
-    required_fields = ["name","role","description","gender"]
-    for field in required_fields:
-      if field not in data or not data.get(field):
-        return jsonify({"error":f'Missing required field: {field}'}), 400
 
-    name = data.get("name")
-    role = data.get("role")
-    description = data.get("description")
-    gender = data.get("gender")
+@app.route("/api/calcular", methods=["POST"])
+def calcular_risco():
+    data = request.json
+    
+    expressao = data.get("expressao")
+    idade = data.get("idade")
+    
+    # Validação
+    if expressao is None or idade is None:
+        return jsonify({"message": "Por favor, forneça valores para expressão e idade."}), 400
+    if not (1 <= expressao <= 100):
+        return jsonify({"message": "O valor de expressão deve estar entre 1 e 100."}), 400
+    if not (18 <= idade <= 80):
+        return jsonify({"message": "A idade deve estar entre 18 e 80 anos."}), 400
 
-    # Fetch avatar image based on gender
-    if gender == "male":
-      img_url = f"https://avatar.iran.liara.run/public/boy?username={name}"
-    elif gender == "female":
-      img_url = f"https://avatar.iran.liara.run/public/girl?username={name}"
+    # Lógica
+    if expressao < 25 and idade < 25:
+        classe_risco = 1
+        mensagem = "Baixo risco."
+    elif 25 <= expressao < 50 and 25 <= idade < 40:
+        classe_risco = 2
+        mensagem = "Risco moderado."
+    elif 50 <= expressao < 75 and 40 <= idade < 60:
+        classe_risco = 3
+        mensagem = "Alto risco."
+    elif expressao >= 75 and idade >= 60:
+        classe_risco = 4
+        mensagem = "Risco elevado."
     else:
-      img_url = None
+        classe_risco = 2  
+        mensagem = "Risco moderado."
 
-    new_friend = Friend(name=name, role=role, description=description, gender= gender, img_url=img_url)
-
-    db.session.add(new_friend) 
-    db.session.commit()
-
-    return jsonify(new_friend.to_json()), 201
-    
-  except Exception as e:
-    db.session.rollback()
-    return jsonify({"error":str(e)}), 500
-  
-# Delete a friend
-@app.route("/api/friends/<int:id>",methods=["DELETE"])
-def delete_friend(id):
-  try:
-    friend = Friend.query.get(id)
-    if friend is None:
-      return jsonify({"error":"Friend not found"}), 404
-    
-    db.session.delete(friend)
-    db.session.commit()
-    return jsonify({"msg":"Friend deleted"}), 200
-  except Exception as e:
-    db.session.rollback()
-    return jsonify({"error":str(e)}),500
-  
-# Update a friend profile
-@app.route("/api/friends/<int:id>",methods=["PATCH"])
-def update_friend(id):
-  try:
-    friend = Friend.query.get(id)
-    if friend is None:
-      return jsonify({"error":"Friend not found"}), 404
-    
-    data = request.json
-
-    friend.name = data.get("name",friend.name)
-    friend.role = data.get("role",friend.role)
-    friend.description = data.get("description",friend.description)
-    friend.gender = data.get("gender",friend.gender)
-
-    db.session.commit()
-    return jsonify(friend.to_json()),200
-  except Exception as e:
-    db.session.rollback()
-    return jsonify({"error":str(e)}),500
-
+    # Retorna a resposta
+    return jsonify({
+        "classe_risco": classe_risco,
+        "mensagem": mensagem
+    }), 200

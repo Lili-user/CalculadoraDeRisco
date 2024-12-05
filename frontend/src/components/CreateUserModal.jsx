@@ -1,157 +1,124 @@
-import {
-	Button,
-	Flex,
-	FormControl,
-	FormLabel,
-	Input,
-	Modal,
-	ModalBody,
-	ModalCloseButton,
-	ModalContent,
-	ModalFooter,
-	ModalHeader,
-	ModalOverlay,
-	Radio,
-	RadioGroup,
-	Textarea,
-	useDisclosure,
-	useToast,
-} from "@chakra-ui/react";
+import { Button, Flex, FormControl, FormLabel, Input, Modal, ModalBody,
+	ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, useColorModeValue, useDisclosure, 
+	useToast} from "@chakra-ui/react";
 import { useState } from "react";
-import { BiAddToQueue } from "react-icons/bi";
-import { BASE_URL } from "../App";
+import { BiAddToQueue} from "react-icons/bi";
+import { BASE_URL } from "../constants";
+
+
 
 const CreateUserModal = ({ setUsers }) => {
-	const { isOpen, onOpen, onClose } = useDisclosure();
-	const [isLoading, setIsLoading] = useState(false);
-	const [inputs, setInputs] = useState({
-		name: "",
-		role: "",
-		description: "",
-		gender: "",
-	});
-	const toast = useToast();
+   const {isOpen, onOpen, onClose} = useDisclosure()
+   const [isLoading, setIsLoading] = useState(false);
+   const [inputs, setInputs] = useState({
 
-	const handleCreateUser = async (e) => {
-		e.preventDefault(); // prevent page refresh
-		setIsLoading(true);
-		try {
-			const res = await fetch(BASE_URL + "/friends", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify(inputs),
-			});
+	nome: "",
+	idade: "",
+	expressao: "",
+})
 
-			const data = await res.json();
-			if (!res.ok) {
-				throw new Error(data.error);
-			}
+const toast = useToast()
 
-			toast({
-				status: "success",
-				title: "Yayy! 🎉",
-				description: "Friend created successfully.",
-				duration: 2000,
-				position: "top-center",
-			});
-			onClose();
-			setUsers((prevUsers) => [...prevUsers, data]);
+const handleCreateUser = async (e) => {
+	e.preventDefault(); // prevent page refresh
+	setIsLoading(true);
+	try {
+		const res = await fetch(BASE_URL + "/usuarios", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify(inputs),
+		});
 
-			setInputs({
-				name: "",
-				role: "",
-				description: "",
-				gender: "",
-			}); // clear inputs
-		} catch (error) {
-			toast({
-				status: "error",
-				title: "An error occurred.",
-				description: error.message,
-				duration: 4000,
-			});
-		} finally {
-			setIsLoading(false);
+		const data = await res.json();
+		if (!res.ok) {
+			throw new Error(data.error);
 		}
-	};
 
-	return (
-		<>
-			<Button onClick={onOpen}>
-				<BiAddToQueue size={20} />
-			</Button>
+		toast({
+			status: "success",
+			title: "Yayy! 🎉",
+			description: "Friend created successfully.",
+			duration: 2000,
+			position: "top-center",
+		});
+		onClose();
+		setUsers((prevUsers) => [...prevUsers, data]);
 
-			<Modal isOpen={isOpen} onClose={onClose}>
-				<ModalOverlay />
-				<form onSubmit={handleCreateUser}>
-					<ModalContent>
-						<ModalHeader> My new BFF 😍 </ModalHeader>
-						<ModalCloseButton />
+		setInputs({
+			nome: "",
+			idade: "",
+			expressao: "",
+		});
+	} catch (error) {
+		toast({
+			status: "error",
+			title: "An error occurred.",
+			description: error.message,
+			duration: 4000,
+		});
+	} finally {
+		setIsLoading(false);
+	}
+   };
 
-						<ModalBody pb={6}>
-							<Flex alignItems={"center"} gap={4}>
-								{/* Left */}
-								<FormControl>
-									<FormLabel>Full Name</FormLabel>
-									<Input
-										placeholder='John Doe'
-										value={inputs.name}
-										onChange={(e) => setInputs({ ...inputs, name: e.target.value })}
-									/>
-								</FormControl>
+   return <>
+	<Button onClick={onOpen}>
+		<BiAddToQueue size={20}/>
+	</Button>
 
-								{/* Right */}
-								<FormControl>
-									<FormLabel>Role</FormLabel>
-									<Input
-										placeholder='Software Engineer'
-										value={inputs.role}
-										onChange={(e) => setInputs({ ...inputs, role: e.target.value })}
-									/>
-								</FormControl>
-							</Flex>
+	<Modal
+		isOpen={isOpen}
+		onClose={onClose}
+	>
+		<ModalOverlay />
+		<form onSubmit={handleCreateUser}>
+		<ModalContent  bg={useColorModeValue("pink.300", "pink.400")}>
+			<ModalHeader> Adicionar usuário</ModalHeader>
+			<ModalCloseButton/>
 
-							<FormControl mt={4}>
-								<FormLabel>Description</FormLabel>
-								<Textarea
-									resize={"none"}
-									overflowY={"hidden"}
-									placeholder="He's a software engineer who loves to code and build things."
-									value={inputs.description}
-									onChange={(e) => setInputs({ ...inputs, description: e.target.value })}
-								/>
-							</FormControl>
+			<ModalBody pb={5}>
+				<Flex alignItems={"center"} gap={3}>
+					<FormControl>
+						<FormLabel>Nome</FormLabel>
+						<Input placeholder="Nome completo aqui " 
+						value={inputs.nome}
+						onChange={(e) => setInputs({...inputs, nome: e.target.value})}
+						/>
+					</FormControl> 
+				</Flex>
+					<FormControl alignItems={"center"} gap={3}>
+						<FormLabel>Idade</FormLabel>
+						<Input placeholder="Idade aqui "
+						value={inputs.idade}
+						onChange={(e) => setInputs({...inputs, idade: e.target.value})}
+						/>
+					</FormControl>
 
-							<RadioGroup mt={4}>
-								<Flex gap={5}>
-									<Radio
-										value='male'
-										onChange={(e) => setInputs({ ...inputs, gender: e.target.value })}
-									>
-										Male
-									</Radio>
-									<Radio
-										value='female'
-										onChange={(e) => setInputs({ ...inputs, gender: e.target.value })}
-									>
-										Female
-									</Radio>
-								</Flex>
-							</RadioGroup>
-						</ModalBody>
+					<FormControl alignItems={"center"} gap={3}>
+						<FormLabel>Expressão</FormLabel>
+						<Input placeholder="Expressão aqui "
+						value={inputs.expressao}
+						onChange={(e) => setInputs({...inputs, expressao: e.target.value})}
+						/>
+					</FormControl>
+			</ModalBody>
 
-						<ModalFooter>
-							<Button colorScheme='blue' mr={3} type='submit' isLoading={isLoading}>
-								Add
-							</Button>
-							<Button onClick={onClose}>Cancel</Button>
-						</ModalFooter>
-					</ModalContent>
-				</form>
-			</Modal>
-		</>
-	);
-};
+			<ModalFooter>
+				<Button colorScheme='pink' color={'blank'} mr={5} type='submit'
+					isLoading={isLoading}
+				>
+					Adicionar
+				</Button>
+				<Button onClick={onClose}>Cancelar</Button>
+			</ModalFooter>
+
+		</ModalContent>
+		</form>
+	</Modal>
+   
+   </>
+   }
+
 export default CreateUserModal;
