@@ -176,7 +176,7 @@ const UserCard = ({ user, setUsers }) => {
 
       <CardBody bg={useColorModeValue("pink.100", "pink.500")}>
         <Button colorScheme="blue" onClick={handleCalculateRisk}>
-          Calcular Expressão
+          Calcular Risco
         </Button>
         {riskResult && (
           <Box mt={4}>
